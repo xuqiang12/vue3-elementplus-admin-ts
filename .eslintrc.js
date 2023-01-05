@@ -40,6 +40,7 @@ module.exports = {
         }
       }
     ],
+    'prettier/prettier': ['error', { endOfLine: 'auto' }],
     'vue/no-multiple-template-root': 'off',
     // 禁用单行标签内容需换行的校验
     'vue/singleline-html-element-content-newline': 'off',

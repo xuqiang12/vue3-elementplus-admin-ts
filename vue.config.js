@@ -8,20 +8,49 @@ function resolve(dir) {
   return path.join(__dirname, dir)
 }
 
+const port = process.env.port || process.env.npm_config_port || 8080 //  npm run dev --port = 9527 可通过这个命令更改端口号
+
 module.exports = {
   lintOnSave: false,
-  publicPath: process.env.NODE_ENV === 'development' ? '/' : '/vue3-element-admin-ts/',
+  publicPath: '/', // 基本路径
+  outputDir: 'dist', // 构建时的输出目录
+  assetsDir: 'static', // 放置静态资源的目录
+  // 如果不需要生产环境的sourcemap 可以设置为false加快构建 既可以减少包大小，也可以加密源码。
+  productionSourceMap: false,
   // transpileDependencies: [/[/\\]node_modules[/\\].*/], // polyfill
   devServer: {
-    port: 3001,
-    before: require('./mock/mock-server.js'),
+    disableHostCheck: true,
+    port: port,
+    open: true, // 启动项目时自动打开浏览器
+    // before: require('./mock/mock-server.js'),
+    overlay: {
+      // 浏览器日志
+      warnings: false,
+      errors: true
+    },
     proxy: {
-      '/api': {
-        target: 'https://geo.datav.aliyun.com',
-        ws: true,
+      /* 代理地址二 */
+      [process.env.VUE_APP_BASE_API_TWO]: {
+        target: process.env.VUE_APP_BASE_URL_TWO,
         changeOrigin: true,
         pathRewrite: {
-          '^/api': ''
+          ['^' + process.env.VUE_APP_BASE_API_TWO]: '' // 这里理解成用'/api'代替target里面的地址,比如我要调用'http://40.00.100.100:3002/user/add'，直接写'/api/user/add'即可
+        }
+      },
+      /* 代理地址三 */
+      [process.env.VUE_APP_BASE_API_THREE]: {
+        target: process.env.VUE_APP_BASE_URL_THREE,
+        changeOrigin: true,
+        pathRewrite: {
+          ['^' + process.env.VUE_APP_BASE_API_THREE]: '' // 这里理解成用'/api'代替target里面的地址,比如我要调用'http://40.00.100.100:3002/user/add'，直接写'/api/user/add'即可
+        }
+      },
+      /* 代理地址一 */
+      [process.env.VUE_APP_BASE_API]: {
+        target: process.env.VUE_APP_BASE_URL /* 目标代理服务器地址 */,
+        changeOrigin: true /* 允许跨域 */,
+        pathRewrite: {
+          ['^' + process.env.VUE_APP_BASE_API]: '' // 这里理解成用'/api'代替target里面的地址,比如我要调用'http://40.00.100.100:3002/user/add'，直接写'/api/user/add'即可
         }
       }
     }
@@ -49,17 +78,6 @@ module.exports = {
     config.when(process.env.NODE_ENV === 'development', (config) =>
       config.devtool('cheap-source-map')
     )
-    // 自定义环境变量
-    config.plugin('define').tap((args) => {
-      const arg = args[0]
-      Object.assign(
-        arg['process.env'],
-        process.env.NODE_ENV === 'development'
-          ? require('./src/config/env.dev')
-          : require('./src/config/env.prod')
-      )
-      return args
-    })
     // 修改loader
     config.module
       .rule('images')
